@@ -11,6 +11,7 @@ import { type ColorValue, type TextStyle } from 'react-native';
 import {
   BottomTabs,
   BottomTabsScreen,
+  enableFreeze,
   featureFlags,
   type BottomTabsScreenProps,
 } from 'react-native-screens';
@@ -56,6 +57,8 @@ export interface NativeTabsViewProps {
     >
   >;
 }
+
+enableFreeze(false);
 
 export function NativeTabsView(props: NativeTabsViewProps) {
   const { builder, style } = props;
