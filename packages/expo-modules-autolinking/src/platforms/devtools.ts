@@ -17,7 +17,7 @@ export async function resolveModuleAsync(
     webpageRoot: devtoolsConfig.webpageRoot
       ? path.join(revision.path, devtoolsConfig.webpageRoot)
       : undefined,
-    cli: devtoolsConfig.cli,
+    cliExtensions: devtoolsConfig.cliExtensions,
   };
 }
 

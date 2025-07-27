@@ -125,19 +125,19 @@ export interface ModuleDescriptorDevTools {
   packageName: string;
   packageRoot: string;
   webpageRoot?: string;
-  cli?: {
+  cliExtensions?: {
     description: string;
     commands: {
       name: string;
-      caption: string;
-      disabled?: ('cli' | 'mcp')[];
+      title: string;
+      environments: ('cli' | 'mcp')[];
       parameters?: {
         name: string;
         type: 'text' | 'number' | 'confirm';
         description?: string;
       }[];
     }[];
-    main: string;
+    entryPoint: string;
   };
 }
 
@@ -331,7 +331,7 @@ export interface RawExpoModuleConfig {
     /**
      * Cli extension config for the module.
      */
-    cli?: {
+    cliExtensions?: {
       /*
        * The description of the module that will be displayed in the CLI.
        */
@@ -346,14 +346,14 @@ export interface RawExpoModuleConfig {
          */
         name: string;
         /**
-         * caption for the command that will be displayed in the CLI.
+         * Title for the command that will be displayed in the CLI.
          */
-        caption: string;
+        title: string;
         /**
          * Optional array of disabled environments for the command. By default all commands are enabled on all environments.
          * Environments can be 'cli' for the CLI or 'mcp' for the Model Context Protocol.
          */
-        disabled?: ('cli' | 'mcp')[];
+        environments: ('cli' | 'mcp')[];
         /**
          * Optional parameters for the command.
          */
@@ -376,7 +376,7 @@ export interface RawExpoModuleConfig {
       /**
        * The main entry point for the module in the CLI.
        */
-      main: string;
+      entryPoint: string;
     };
   };
 }

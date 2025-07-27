@@ -13,10 +13,10 @@ interface AutolinkingPlugin {
   packageName: string;
   packageRoot: string;
   webpageRoot?: string;
-  cli?: {
+  cliExtensions?: {
     description: string;
     commands: DevToolsPluginCliCommand[];
-    main: string;
+    entryPoint: string;
   };
 }
 export interface DevToolsPluginCliCommandParameter {
@@ -27,8 +27,8 @@ export interface DevToolsPluginCliCommandParameter {
 
 export interface DevToolsPluginCliCommand {
   name: string;
-  caption: string;
-  disabled?: ('cli' | 'mcp')[];
+  title: string;
+  environment: ('cli' | 'mcp')[];
   parameters?: DevToolsPluginCliCommandParameter[];
 }
 
@@ -58,12 +58,12 @@ export default class DevToolsPluginManager {
       webpageEndpoint: plugin.webpageRoot
         ? `${DevToolsPluginEndpoint}/${plugin.packageName}`
         : undefined,
-      decsription: plugin.cli?.description ?? '',
-      executor: plugin.cli?.main
+      decsription: plugin.cliExtensions?.description ?? '',
+      executor: plugin.cliExtensions?.entryPoint
         ? async ({ command, args, apps }: DevToolsPluginCliExecutorArguments) => {
             return new Promise<string>(async (resolve, reject) => {
               // Set up the command and its arguments
-              const tool = path.join(plugin.packageRoot, plugin.cli!.main);
+              const tool = path.join(plugin.packageRoot, plugin.cliExtensions!.entryPoint);
               const child = spawn(
                 'node',
                 [tool, command, `'${JSON.stringify(args)}'`, `'${JSON.stringify(apps)}'`],

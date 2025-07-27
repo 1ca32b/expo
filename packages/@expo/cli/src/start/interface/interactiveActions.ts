@@ -155,7 +155,11 @@ export class DevServerManagerActions {
             // If the plugin has a webpage endpoint, we can open it in the browser.
             acc[plugin.packageName].devtool = plugin as DevToolsPlugin;
           }
-          if ('cli' in plugin && (plugin.cli?.commands.length ?? 0) > 0 && plugin.executor) {
+          if (
+            'cli' in plugin &&
+            (plugin.cliExtensions?.commands.length ?? 0) > 0 &&
+            plugin.executor
+          ) {
             // If the plugin has an executor and one or more CLI commands, we can execute it
             acc[plugin.packageName].cli = plugin;
           }
@@ -167,8 +171,8 @@ export class DevServerManagerActions {
       // Enumerate plugins and build menuitem strcuture - with a submenu for plugins that have both CLI commands and devtools.
       const pluginMenuItems: MoreToolMenuItem[] = plugins
         .map((plugin) => {
-          const commands = (plugin.cli?.commands ?? []).filter(
-            (p) => p.disabled?.includes('cli') !== true
+          const commands = (plugin.cliExtensions?.commands ?? []).filter((p) =>
+            p.environment?.includes('cli')
           );
           if (commands.length > 0 && plugin.webpageEndpoint) {
             // We have both a devtool and CLI commands for this plugin, so we create a submenu.
@@ -180,7 +184,7 @@ export class DevServerManagerActions {
                 const submenuItems: MoreToolMenuItem[] = [
                   devtoolFactory(plugin, this.devServerManager),
                   ...commands.map((descriptor) => ({
-                    title: descriptor.caption,
+                    title: descriptor.title,
                     value: descriptor.name,
                     action: () => cliCommandExecutor(plugin, descriptor, this.devServerManager),
                   })),
@@ -198,7 +202,7 @@ export class DevServerManagerActions {
           } else if (plugin.webpageEndpoint) {
             // Only devtools
             return devtoolFactory(plugin, this.devServerManager);
-          } else if (plugin.cli && commands.length > 0) {
+          } else if (plugin.cliExtensions && commands.length > 0) {
             // Only Cli commands
             return cliFactory(plugin, this.devServerManager);
           }
@@ -254,10 +258,12 @@ const cliFactory = (
   plugin: DevToolsPlugin,
   devServerManager: DevServerManager
 ): MoreToolMenuItem | null => {
-  const cliConfig = plugin.cli;
-  const commands = (cliConfig?.commands ?? []).filter((p) => p.disabled?.includes('cli') !== true);
+  const cliExtensionsConfig = plugin.cliExtensions;
+  const commands = (cliExtensionsConfig?.commands ?? []).filter((p) =>
+    p.environment?.includes('cli')
+  );
 
-  if (cliConfig == null || commands.length === 0) {
+  if (cliExtensionsConfig == null || commands.length === 0) {
     return null;
   }
   return {
@@ -266,7 +272,7 @@ const cliFactory = (
     action: async () => {
       // Show selector with plugin commands.
       const commandMenuItems = commands.map((cmd) => ({
-        title: cmd.caption,
+        title: cmd.title,
         value: cmd.name,
       }));
 
@@ -290,13 +296,13 @@ const cliCommandExecutor = async (
   plugin: DevToolsPlugin,
   cmd: {
     name: string;
-    caption: string;
+    title: string;
     parameters?: DevToolsPluginCliCommandParameter[];
   },
   devServerManager: DevServerManager
 ) => {
-  const cliConfig = plugin.cli;
-  if (cliConfig == null) {
+  const cliExtensionsConfig = plugin.cliExtensions;
+  if (cliExtensionsConfig == null) {
     return;
   }
 
@@ -328,7 +334,7 @@ const cliCommandExecutor = async (
     );
   }
 
-  const spinner = ora(`Executing '${cmd.caption}'`).start();
+  const spinner = ora(`Executing '${cmd.title}'`).start();
 
   try {
     // Execute the command with the plugin executor.
@@ -361,7 +367,7 @@ const cliCommandExecutor = async (
         resultsString += results;
       }
     }
-    spinner.succeed(`${cmd.caption} succeeded:${resultsString}`).stop();
+    spinner.succeed(`${cmd.title} succeeded:${resultsString}`).stop();
   } catch (error: any) {
     // @ts-ignore
     if (__DEV__) {
