@@ -65,7 +65,7 @@ enum ImageResizeMode: String, Enumerable {
   case center
   case stretch
 
-#if os(iOS)
+#if os(iOS) || os(tvOS)
   var contentMode: UIView.ContentMode {
     switch self {
     case .contain:
