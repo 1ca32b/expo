@@ -192,7 +192,8 @@ export function withMetroErrorReportingResolver(config: MetroConfig): MetroConfi
     };
 
     const pad = (num: number) => {
-      return new Array(num).fill(' ').join('');
+      const tabSize = 4;
+      return ' '.repeat(num * tabSize);
     };
 
     const root = config.server?.unstable_serverRoot ?? config.projectRoot;
@@ -235,13 +236,14 @@ export function withMetroErrorReportingResolver(config: MetroConfig): MetroConfi
     const inverseTree = recurseBackWithLimit(
       { origin: context.originModulePath, request: moduleName },
       // TODO: Do we need to expose this?
-      35
+      15
     );
 
     if (inverseTree.previous.length > 0) {
-      debug('Found inverse graph:', JSON.stringify(inverseTree, null, 2));
+      // debug('Found inverse graph:', JSON.stringify(inverseTree, null, 2));
       let extraMessage = chalk.bold('Import stack:');
-      const printRecursive = (tree: InverseDepResult, depth: number = 0) => {
+      const maxPrintDepth = 6;
+      const printRecursive = (tree: InverseDepResult, ident: number = 0, depth: number = 0) => {
         let filename = path.relative(root, tree.origin);
         if (filename.match(/\?ctx=[\w\d]+$/)) {
           filename = filename.replace(/\?ctx=[\w\d]+$/, chalk.dim(' (require.context)'));
@@ -257,12 +259,12 @@ export function withMetroErrorReportingResolver(config: MetroConfig): MetroConfi
           ) {
             formattedRequest =
               formattedRequest +
-              chalk`\n          {yellow Importing react-native internals is not supported on web.}`;
+              chalk`\n           {yellow ^ Importing react-native internals is not supported on web.}`;
           }
 
-          filename = filename + chalk`\n{gray  |} {cyan import} ${formattedRequest}\n`;
+          filename = filename + chalk`\n${pad(ident)}{gray  |} {cyan import} ${formattedRequest}\n`;
         }
-        let line = '\n' + pad(depth) + chalk.gray(' ') + filename;
+        let line = '\n' + pad(ident) + chalk.gray(' ') + filename;
         if (filename.match(/node_modules/)) {
           line = chalk.gray(
             // Bold the node module name
@@ -272,11 +274,19 @@ export function withMetroErrorReportingResolver(config: MetroConfig): MetroConfi
           );
         }
         extraMessage += line;
+        if (depth > maxPrintDepth) {
+          extraMessage += chalk.gray(
+            chalk`${pad(ident)}           {yellow ^ (depth limit reached)}\n\n`
+          );
+          return;
+        }
+
         for (const child of tree.previous) {
           printRecursive(
             child,
-            // Only add depth if there are multiple children
-            tree.previous.length > 1 ? depth + 1 : depth
+            // Only add indent if there are multiple children
+            tree.previous.length > 1 ? ident + 1 : ident,
+            depth + 1
           );
         }
       };
